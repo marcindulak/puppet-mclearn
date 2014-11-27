@@ -309,7 +309,7 @@ class mclearn::install (
                                "python-django",
                                #"uwsgi",  # not available on EL7 yet
                      ]
-      $execinstall = "yum install -y mcxtrace-* mcstas-*"
+      $execinstall = "yum install -y mcxtrace-*1.1* mcstas-*2.1*"
       $src_sentinel = "/usr/local/mcstas"
     }
     "debian": {
@@ -338,7 +338,7 @@ class mclearn::install (
                        "python-django",
                        "uwsgi",
                      ]
-      $execinstall = "apt-get install -y --force-yes mcxtrace-* mcstas-*"
+      $execinstall = "apt-get install -y --force-yes mcxtrace-*1.1* mcstas-*2.1*"
       $src_sentinel = "/usr/bin/mcdoc"
     }
 
@@ -413,7 +413,7 @@ class mclearn::initdb (
 
 class mclearn::mclearn (
   $scm = "git",
-  $url = "github.com/marcindulak/puppet-mclearn.git",
+  $url = "github.com/marcindulak/mclearn.git",  # custom mclearn settings
   $user = undef,
   $password = undef,
   $mysql_password = undef,

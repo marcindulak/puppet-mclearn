@@ -25,7 +25,7 @@ Sample Usage
 * on RHEL7::
 
         $ su -c "yum -y install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-2.noarch.rpm"
-        $ su -c "yum -y install puppet git"
+        $ su -c "yum -y install puppet git httpd"
         $ cd /etc/puppet/modules
         $ su -c "mkdir -p ../manifests"
         $ su -c "git clone https://github.com/marcindulak/puppet-mclearn.git"
@@ -41,7 +41,7 @@ Sample Usage
 
 * on Fedora, enable http://rpmfusion.org/Configuration (provides pgplot), and::
 
-        $ su -c "yum -y install puppet git"
+        $ su -c "yum -y install puppet git httpd"
         $ cd /etc/puppet/modules
         $ su -c "mkdir -p ../manifests"
         $ su -c "git clone https://github.com/marcindulak/puppet-mclearn.git"
@@ -79,10 +79,10 @@ On RHEL/Fedora use the default Apache www directory::
 
         node default {
         class { 'mclearn::build': } ->
-        class { 'mclearn::install': wwwdir = "/var/www/html" }
+        class { 'mclearn::install': wwwdir => "/var/www/html" }
         # The 'mclearn::initdb' does not work yet due to a missing LDAP setup.
-        #class { 'mclearn::install': wwwdir = "/var/www/html" } ->
-        #class { 'mclearn::initdb': django_user => "root", django_email => "root@domain.com", django_password => "password", wwwdir = "/var/www/html" }
+        #class { 'mclearn::install': wwwdir => "/var/www/html" } ->
+        #class { 'mclearn::initdb': django_user => "root", django_email => "root@domain.com", django_password => "password", wwwdir => "/var/www/html" }
         }
 
 Change permissions so only root can read your credentials::
