@@ -310,7 +310,7 @@ class mclearn::install (
                                #"uwsgi",  # not available on EL7 yet
                      ]
       $execinstall = "yum install -y mcxtrace-*1.1* mcstas-*2.1*"
-      $src_sentinel = "/usr/local/mcstas"
+      $sentinel = "/usr/local/mcstas"
     }
     "debian": {
       $mcpackages = [
@@ -339,21 +339,21 @@ class mclearn::install (
                        "uwsgi",
                      ]
       $execinstall = "apt-get install -y --force-yes mcxtrace-*1.1* mcstas-*2.1*"
-      $src_sentinel = "/usr/bin/mcdoc"
+      $sentinel = "/usr/bin/mcdoc"
     }
 
     default: {
 
       $mcpackages = undef
       $install_dependencies = undef
-      $src_sentinel = undef
+      $sentinel = undef
     }
 
   }
 
   exec { $execinstall:
     command => $execinstall,
-    onlyif => "test ! -r $src_sentinel",
+    onlyif => "test ! -r $sentinel",
     timeout => 3600,
     require => Exec["local repo"],
   }
@@ -364,7 +364,7 @@ class mclearn::install (
 
   exec { $wwwdir:
     command => "cp -rp $srcdir/tools/Python/www/www-django/mcwww $wwwdir",
-    onlyif => "test ! -d $wwwdir && test -r $src_sentinel",
+    onlyif => "test ! -d $wwwdir && test -r $sentinel",
     require => Exec["$execinstall"],
   }
 
@@ -410,154 +410,3 @@ class mclearn::initdb (
 
 }
 
-
-class mclearn::mclearn (
-  $scm = "git",
-  $url = "github.com/marcindulak/mclearn.git",  # custom mclearn settings
-  $user = undef,
-  $password = undef,
-  $mysql_password = undef,
-  $apache_ssl_cert_custom = undef,
-  $apache_ssl_key_custom = undef
-  ) {
-  
-  $use_password = $password ? {
-    undef => "" ,
-    default => ":$password",
-  }
- 
-  # needed by exec, otherwise one needs to provide full path to git ...
-  Exec {
-    path => "/bin:/sbin:/usr/bin:/usr/sbin",
-  }
-
-  case $::osfamily {
-    "redhat": {
-      $apache_service = "httpd"
-      $apache_root = "/var/www/html"
-      $apache_confdir = "/etc/httpd/conf.d"
-      $apache_ssl_cert = $apache_ssl_cert_custom ? {
-        undef => "/etc/pki/tls/certs/localhost.crt" ,
-        default => $apache_ssl_cert_custom,
-      }
-      $apache_ssl_key = $apache_ssl_key_custom ? {
-        undef => "/etc/pki/tls/private/localhost.key" ,
-        default => $apache_ssl_key_custom,
-      }
-      $apache_user = "apache"
-      $apache_group = "apache"
-      $modssl_package = "mod_ssl"
-      $modphp_package = "php"
-      $php_mysql_package = "php-mysql"
-    }
-    "debian": {
-      $apache_service = "apache2"
-      $apache_root = "/var/www"
-      $apache_confdir = "/etc/apache2/conf.d"
-      $apache_ssl_cert = $apache_ssl_cert_custom ? {
-        undef => "/etc/ssl/certs/ssl-cert-snakeoil.pem" ,
-        default => $apache_ssl_cert_custom,
-      }
-      $apache_ssl_key = $apache_ssl_key_custom ? {
-        undef => "/etc/ssl/private/ssl-cert-snakeoil.key" ,
-        default => $apache_ssl_key_custom,
-      }
-      $apache_user = "www-data"
-      $apache_group = "www-data"
-      $modssl_package = "apache2"
-      $modphp_package = "libapache2-mod-php5"
-      $php_mysql_package = "php5-mysql"
-    }
-    default: {
-      $apache_service = undef
-      $apache_root = undef
-      $apache_confdir = undef
-      $apache_ssl_cert = undef
-      $apache_ssl_key = undef
-      $apache_user = undef
-      $apache_group = undef
-      $modssl_package = undef
-      $modphp_package = undef
-      $php_mysql_package = undef
-    }
-  }
-
-  # mod_ssl: on RHEL simply install, on Debian special steps
-  case $::osfamily {
-    "redhat": {
-      if ! defined(Package[$modssl_package]) {
-        package { $modssl_package:
-          name => $modssl_package,
-          ensure => installed,
-          before => File['mclearn.conf'],
-          notify => Service[$apache_service],
-        }
-      }
-    }
-    "debian": {
-      exec { "a2enmod ssl":
-        command => 'a2enmod ssl',
-        before => File['mclearn.conf'],
-        notify => Service[$apache_service],
-      }
-    }
-  }
-
-  if ! defined(Package[$modphp_package]) {
-    package { $modphp_package:
-      name => $modphp_package,
-      ensure => installed,
-      before => File['mclearn.conf'],
-      notify => Service[$apache_service],
-    }
-  }
-
-  if ! defined(Package[$php_mysql_package]) {
-    package { $php_mysql_package:
-      name => $php_mysql_package,
-      ensure => installed,
-      before => File['mclearn.conf'],
-      notify => Service[$apache_service],
-    }
-  }
-
-  package { "$scm":
-    name => $scm ? {
-      "hg" => "mercurial",
-      default => $scm,
-    },
-    ensure => installed,
-    before => Exec["clone", "checkout"],
-  }
-
-  # apache configuration
-  file { "mclearn.conf":
-    ensure => file,
-    path => "$apache_confdir/mclearn.conf",
-    owner => $apache_user,
-    group => $apache_group,
-    mode => 644,
-    content => template("mclearn/mclearn.erb"),
-    notify => Service[$apache_service],
-  }
-
-  exec { "clone":
-    command => "rm -rf $apache_root/mclearn&& cd $apache_root&& $scm clone https://$user$use_password@$url&& cd mclearn&& $scm status",
-    onlyif => "test ! -d $apache_root/mclearn",
-    before => Exec["checkout"],
-  }
-
-  exec { "checkout":
-    command => "ls $apache_root/mclearn&& cd $apache_root/mclearn&& $scm checkout&& $scm status&& chown -R $apache_user:$apache_group .; chmod -R o-rwx .",
-    onlyif => "test -d $apache_root/mclearn",
-    before => Exec["mysql_password"],
-    notify => Service[$apache_service]
-  }
-
-  exec { "mysql_password":
-    command => "ls $apache_root/mclearn/db_create_tables.php&& sed -i 's|\$ADMIN_PASSWORD =.*|\$ADMIN_PASSWORD = \"$mysql_password\"; // modified by puppet |' $apache_root/mclearn/db_create_tables.php",
-    onlyif => "test -d $apache_root/mclearn",
-    notify => Service[$apache_service],
-  }
-
-}
