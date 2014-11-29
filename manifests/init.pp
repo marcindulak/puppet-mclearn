@@ -2,9 +2,10 @@ class mclearn (
   # empty for now
   ) {
   }
+  
 
 class mclearn::apache {
-
+    
   case $::osfamily {
     "redhat": {
       $apache_package = "httpd"
@@ -33,15 +34,16 @@ class mclearn::apache {
 
 }
 
+
 class mclearn::mysql (
   $mysql_password = undef
   ) {
-
+  
   # needed by exec, otherwise one needs to provide full path to sed, grep, ...
   Exec {
     path => "/bin:/sbin:/usr/bin:/usr/sbin",
   }
-
+  
   case $::osfamily {
     "redhat": {
       $mysql_package = "mysql-server"
@@ -96,6 +98,7 @@ class mclearn::mysql (
 
 }
 
+
 class mclearn::build (
   $url = "https://svn.mccode.org/svn/McCode/trunk",
   $srcdir = "/root/trunk",
@@ -145,7 +148,6 @@ class mclearn::build (
       $build_mcxtrace = "build_debs_mcxtrace"
     }
     default: {
-
       $build_dependencies = undef
       $build_mcstas = undef
       $build_mcxtrace = undef
@@ -271,6 +273,7 @@ class mclearn::build (
 
 }
 
+
 class mclearn::install (
   $srcdir = "/root/trunk",
   $wwwdir = "/srv/mcstas-django"
@@ -308,7 +311,7 @@ class mclearn::install (
                                "nginx",
                                "python-django",
                                #"uwsgi",  # not available on EL7 yet
-                     ]
+                               ]
       $execinstall = "yum install -y mcxtrace-*1.1* mcstas-*2.1*"
       $sentinel = "/usr/local/mcstas"
     }
@@ -332,18 +335,16 @@ class mclearn::install (
                      "mcxtrace-tools-python-mxrun-1.1",
                      ]
       $install_dependencies = [
-                       "openmpi-bin",
-                       "python-dev",
-                       "nginx-full",
-                       "python-django",
-                       "uwsgi",
-                     ]
+                               "openmpi-bin",
+                               "python-dev",
+                               "nginx-full",
+                               "python-django",
+                               "uwsgi",
+                               ]
       $execinstall = "apt-get install -y --force-yes mcxtrace-*1.1* mcstas-*2.1*"
       $sentinel = "/usr/bin/mcdoc"
     }
-
     default: {
-
       $mcpackages = undef
       $install_dependencies = undef
       $sentinel = undef
@@ -369,6 +370,7 @@ class mclearn::install (
   }
 
 }
+
 
 class mclearn::initdb (
   $wwwdir = "/srv/mcstas-django",
