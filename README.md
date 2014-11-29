@@ -3,7 +3,7 @@ Description
 -----------
 
 A puppet module that builds and installs
-http://www.mcstas.org/ on Debian(Ubuntu) or RHEL(Fedora).
+http://www.mcstas.org/ on amd64 Debian(Ubuntu) or x86_64 RHEL(Fedora).
 
 Tested on: Debian 7/8, Ubuntu 14.04 and RHEL7, Fedora 20.
 
