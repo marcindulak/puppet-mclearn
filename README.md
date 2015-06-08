@@ -2,7 +2,7 @@
 Description
 -----------
 
-**Warning**: the module currently is not working properly!
+**Warning**: not maintained anymore!
 
 A puppet module that builds and installs
 http://www.mcstas.org/ on amd64 Debian(Ubuntu) or x86_64 RHEL(Fedora).
